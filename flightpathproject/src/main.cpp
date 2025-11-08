@@ -99,17 +99,44 @@ int main() {
         dots.push_back(dot);
     }
 
+    sf::View view = window.getDefaultView();
+    float zoom = 1.0f;
+    bool panning = false;
+    sf::Vector2i mousePos;
+
     while (window.isOpen()) {
         sf::Event event;
         while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed)
                 window.close();
-        }
+            if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape) {
+                window.close();
+            }
+            if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::R) {
+                view = window.getDefaultView();
+                zoom = 1.0f;
+                window.setView(view);
+            }
+            if (event.type == sf::Event::MouseWheelScrolled) {
+                if (event.mouseWheelScroll.delta > 0) {
+                    zoom *= .9f;
+                }
+                else if (event.mouseWheelScroll.delta < 0) {
+                    zoom *= 1.1f;
+                }
+                if (zoom < .05f)
+                    zoom = .05f;
+                else if (zoom > 2.f)
+                    zoom = 2.f;
+                view.setSize(window.getDefaultView().getSize() * zoom);
+                window.setView(view);
+            }
 
-        window.clear(sf::Color::Black);
-        window.draw(map);
-        for (auto dot: dots)
-            window.draw(dot);
-        window.display();
+            window.clear(sf::Color::Black);
+            window.draw(map);
+            for (auto dot: dots)
+                window.draw(dot);
+            window.display();
+        }
     }
 }
