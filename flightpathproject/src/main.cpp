@@ -4,7 +4,7 @@
 #include <string>
 #include <SFML/Graphics.hpp>
 #include <iostream>
-
+#include <cmath>
 
 struct Airport {
     int id;
@@ -14,7 +14,7 @@ struct Airport {
 };
 
 
-static std::string get_field(std::stringstream& s) {
+static std::string get_field(std::stringstream& s) { // helper to parse CSV
     std::string out;
     if (s.peek() == '"') {
         s.get(); // "
@@ -26,6 +26,17 @@ static std::string get_field(std::stringstream& s) {
     if (out == "\\N") out.clear();
     return out;
 }
+
+
+sf::Vector2f toPixel(double lat, double lon, float width, float height) {
+    double latRad = lat * M_PI / 180.0 ;  //mercator projection formula from stack overflow
+    double mercN = std::log(std::tan((M_PI / 4.0) + (latRad / 2.0)));
+    double y = (height / 2.0) - (width * mercN / (2.0 * M_PI));
+    double x = (lon + 180.0) * (width / 360.0);
+    return sf::Vector2f(static_cast<float>(x), static_cast<float>(y));
+}
+
+
 
 
 int main() {
@@ -66,7 +77,7 @@ int main() {
         airports.push_back(a);
     }
 
-    sf::RenderWindow window(sf::VideoMode(1200, 1200), "OpenFlights Viewer");
+    sf::RenderWindow window(sf::VideoMode(1200, 1200), "OpenFlights Viewer"); // window for map
     window.setFramerateLimit(60);
 
     sf::Texture mapTexture;
@@ -75,6 +86,18 @@ int main() {
     }
 
     sf::Sprite map(mapTexture);
+    float mapW = mapTexture.getSize().x;
+    float mapH = mapTexture.getSize().y;
+
+    std::vector<sf::CircleShape> dots;
+    dots.reserve(airports.size());
+    for (auto& airport : airports) {
+        auto p = toPixel(airport.lat, airport.lon, mapW, mapH);
+        sf::CircleShape dot(1.5f);
+        dot.setPosition(p.x -1.5f, p.y-1.5f);
+        dot.setFillColor(sf::Color::Red);
+        dots.push_back(dot);
+    }
 
     while (window.isOpen()) {
         sf::Event event;
@@ -85,6 +108,8 @@ int main() {
 
         window.clear(sf::Color::Black);
         window.draw(map);
+        for (auto dot: dots)
+            window.draw(dot);
         window.display();
     }
 }
