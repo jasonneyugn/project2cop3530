@@ -168,6 +168,55 @@ std::vector<int> dijkstra(int start, int end, const std::unordered_map<int, std:
 }
 
 
+std::vector<int> astar(int start, int end, const std::unordered_map<int, std::vector<Edge>>& adj, const std::unordered_map<int, Airport*>& airportById) {
+    std::unordered_map<int, double> dist;
+    std::unordered_map<int, double> predicteddist;
+    std::unordered_map<int, int> prev;
+    std::unordered_map<int, bool> visited;
+
+    for (auto& [u, _] : adj) {
+        dist[u] = std::numeric_limits<double>::infinity();
+        predicteddist[u] = std::numeric_limits<double>::infinity();
+    }
+
+    dist[start] = 0;
+    predicteddist[start] = haversine(airportById.at(start)->lat, airportById.at(start)->lon, airportById.at(end)->lat, airportById.at(end)->lon);
+
+    using Node = std::pair<double, int>;
+    std::priority_queue<Node, std::vector<Node>, std::greater<Node>> pq;
+    pq.push({dist[start], start});
+
+    while (!pq.empty()) {
+        int u = pq.top().second;
+        pq.pop();
+
+        if (dist[u]) {
+            continue;
+        }
+        visited[u] = true;
+
+        if (u == end) {
+            break;
+        }
+        if (!adj.count(u)) {
+            continue;
+        }
+        for (auto& edge : adj.at(u)) {
+            int v = edge.dest;
+            double weight = edge.weight;
+            double newDist = dist[u] + weight;
+            if (newDist < dist[v]) {
+                prev[v] = u;
+                dist[v] = newDist;
+                double heuristic = haversine(airportById.at(v)->lat, airportById.at(v)->lon, airportById.at(end)->lat, airportById.at(end)->lon);
+                predicteddist[v] = dist[v] + heuristic;
+                pq.push({predicteddist[v], v});
+            }
+        }
+    }
+}
+
+
 int main() {
     std::vector<Airport> airports;
     std::string line;
