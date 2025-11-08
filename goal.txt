@@ -1,0 +1,4 @@
+(For teammates) So far, the airports have been parsed and map has been rendered. If you run the program
+you'll get a quick gist of the airports laid out and the zooming features, pressing R resets the zoom, scroll in
+and out, etc. Next we have to actually put the paths onto the airports and then do the algorithms to see the shortest paths
+Djikstra vs A on a real world graph with routes TLDR
