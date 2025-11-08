@@ -101,7 +101,7 @@ int main() {
 
     sf::View view = window.getDefaultView();
     float zoom = 1.0f;
-    bool panning = false;
+    bool dragging = false;
     sf::Vector2i mousePos;
 
     while (window.isOpen()) {
@@ -130,6 +130,20 @@ int main() {
                     zoom = 2.f;
                 view.setSize(window.getDefaultView().getSize() * zoom);
                 window.setView(view);
+            }
+            if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {   // mouse panning from stack overflow
+                 dragging = true;
+                mousePos = sf::Mouse::getPosition(window);
+            }
+            else if (event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Left) {
+                dragging = false;
+            }
+            else if (event.type == sf::Event::MouseMoved && dragging) {
+                sf::Vector2i currMouse = sf::Mouse::getPosition(window);
+                sf::Vector2f delta = window.mapPixelToCoords(mousePos, view) - window.mapPixelToCoords(currMouse, view);
+                view.move(delta);
+                window.setView(view);
+                mousePos = currMouse;
             }
 
             window.clear(sf::Color::Black);
