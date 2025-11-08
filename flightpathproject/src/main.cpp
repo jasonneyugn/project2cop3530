@@ -6,6 +6,8 @@
 #include <iostream>
 #include <cmath>
 #include <unordered_map>
+#include <queue>
+#include <limits>
 
 struct Airport {
     int id;
@@ -21,7 +23,6 @@ struct Edge {
 };
 
 
-
 static std::string get_field(std::stringstream& s) { // helper to parse CSV
     std::string out;
     if (s.peek() == '"') {
@@ -34,6 +35,7 @@ static std::string get_field(std::stringstream& s) { // helper to parse CSV
     if (out == "\\N") out.clear();
     return out;
 }
+
 
 std::unordered_map<int, Airport*> makeMap(std::vector<Airport>& airports) {
     std::unordered_map<int, Airport*> map;
@@ -113,6 +115,59 @@ void loadRoutes(const std::string& filename, std::unordered_map<int, std::vector
 }
 
 
+std::vector<int> dijkstra(int start, int end, const std::unordered_map<int, std::vector<Edge>>& adj) {
+    std::unordered_map<int, double> dist;
+    std::unordered_map<int, int> prev;
+    std::unordered_map<int, bool> visited;
+
+    for (auto& [u, _] : adj) {
+        dist[u] = std::numeric_limits<double>::infinity();
+        visited[u] = false;
+    }
+    dist[start] = 0;
+
+    using Node = std::pair<double, int>;
+    std::priority_queue<Node, std::vector<Node>, std::greater<Node>> pq;
+
+    pq.push({dist[start], start});
+    while (!pq.empty()) {
+        auto curr = pq.top();
+        pq.pop();
+        int u = curr.second;
+        if (visited[u]) {
+            continue;
+        }
+        visited[u] = true;
+        if (u == end) {
+            break;
+        }
+        if (!adj.count(u)) {
+            continue;
+        }
+        for (auto& edge : adj.at(u)) {
+            int v = edge.dest;
+            double weight = edge.weight;
+            double newDist = dist[u] + weight;
+            if (newDist < dist[v]) {
+                dist[v] = newDist;
+                prev[v] = u;
+                pq.push({dist[v], v});
+            }
+        }
+    }
+    std::vector<int> path;
+    if (dist[end] == std::numeric_limits<double>::infinity()) {
+        return path;
+    }
+    for (int at = end; at != start; at = prev[at]) {
+        path.push_back(at);
+    }
+    path.push_back(start);
+    std::reverse(path.begin(), path.end());
+    return path;
+}
+
+
 int main() {
     std::vector<Airport> airports;
     std::string line;
@@ -179,6 +234,9 @@ int main() {
     }
 
     int selectedAirport = -1;
+    int startAirport = -1;
+    int endAirport = -1;
+    std::vector<int> shortestPath;
     std::unordered_map<int, sf::Vector2f> airportPos;
 
     for (auto& airport : airports) {
@@ -253,39 +311,88 @@ int main() {
                     }
                 }
             }
-        }
-        window.clear(sf::Color::Black);
-        window.draw(map);
-        for (size_t i = 0; i < airports.size(); i++) {
-            auto& airport = airports[i];
-            auto dot = dots[i];
+            if (event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Right) {
+                sf::Vector2f clickPos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
+                float clickRadius = 2.0f;
+                int clickedId = -1;
 
-            if (airport.id == selectedAirport) {
-                dot.setFillColor(sf::Color::Cyan);
-            }
-            else
-                dot.setFillColor(sf::Color::Red);
-
-            dot.setScale(zoom, zoom);
-            window.draw(dot);
-        }
-        if (selectedAirport != -1 && adj.count(selectedAirport)) {
-            sf::VertexArray lines(sf::Lines);
-            for (auto& e : adj[selectedAirport]) {
-                if (!airportPos.count(e.dest)) {
-                    continue;
+                for (auto& airport : airports) {
+                    sf::Vector2f pos = airportPos[airport.id];
+                    if (std::hypot(pos.x - clickPos.x, pos.y - clickPos.y) < clickRadius) {
+                        clickedId = airport.id;
+                        break;
+                    }
                 }
-                lines.append(sf::Vertex(airportPos[selectedAirport], sf::Color::Yellow));
-                lines.append(sf::Vertex(airportPos[e.dest], sf::Color::Yellow));
+                if (clickedId != -1) {
+                    if (startAirport ==-1) {
+                        startAirport = clickedId;
+                        std::cout << airportById.at(clickedId)->name << std::endl;
+                    }
+                    else if (endAirport ==-1) {
+                        endAirport = clickedId;
+                        std::cout << airportById.at(clickedId)->name << std::endl;
+                        shortestPath = dijkstra(startAirport, endAirport, adj);
+                        if (shortestPath.size() > 0) {
+                            std::cout << "no path found." << std::endl;
+                        } else {
+                            std::cout << "Shortest path: " << shortestPath.size() << std::endl;
+                        }
+                    }
+                } else {
+                    startAirport = clickedId;
+                    endAirport = -1;
+                    shortestPath.clear();
+                }
             }
-            window.draw(lines);
-            sf::CircleShape dotnew(2.f);
-            dotnew.setFillColor(sf::Color::Blue);
-            dotnew.setPosition(airportPos[selectedAirport].x - 2.f, airportPos[selectedAirport].y - 2.f);
-            window.draw(dotnew);
+            if (event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Middle) {
+                sf::Vector2f clickPos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
+                float clickRadius = 2.0f;
+                int clickedId = -1;
+
+                for (auto& airport : airports) {
+                    sf::Vector2f pos = airportPos[airport.id];
+                    if (std::hypot(pos.x - clickPos.x, pos.y - clickPos.y) < clickRadius) {
+                        clickedId = airport.id;
+                        break;
+                    }
+                }
+                if (clickedId != -1) {
+                    std::cout << "Airport name: " << airportById.at(clickedId)->name << std::endl;
+                }
+            }
+            window.clear(sf::Color::Black);
+            window.draw(map);
+            for (size_t i = 0; i < airports.size(); i++) {
+                auto& airport = airports[i];
+                auto dot = dots[i];
+
+                if (airport.id == selectedAirport) {
+                    dot.setFillColor(sf::Color::Cyan);
+                }
+                else
+                    dot.setFillColor(sf::Color::Red);
+
+                dot.setScale(zoom, zoom);
+                window.draw(dot);
+            }
+            if (selectedAirport != -1 && adj.count(selectedAirport)) {
+                sf::VertexArray lines(sf::Lines);
+                for (auto& e : adj[selectedAirport]) {
+                    if (!airportPos.count(e.dest)) {
+                        continue;
+                    }
+                    lines.append(sf::Vertex(airportPos[selectedAirport], sf::Color::Yellow));
+                    lines.append(sf::Vertex(airportPos[e.dest], sf::Color::Yellow));
+                }
+                window.draw(lines);
+                sf::CircleShape dotnew(2.f);
+                dotnew.setFillColor(sf::Color::Blue);
+                dotnew.setPosition(airportPos[selectedAirport].x - 2.f, airportPos[selectedAirport].y - 2.f);
+                window.draw(dotnew);
+            }
+            window.display();
         }
-        window.display();
-    }
 
     }
+}
 
