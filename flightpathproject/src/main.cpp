@@ -63,7 +63,8 @@ int main() {
         std::string latS = get_field(ss);
         std::string lonS = get_field(ss);
 
-        if (idS.empty() || latS.empty() || lonS.empty()) continue;
+        if (idS.empty() || latS.empty() || lonS.empty())
+            continue;
 
         a.id = std::stoi(idS);
         try {
@@ -128,7 +129,12 @@ int main() {
                     zoom = .05f;
                 else if (zoom > 2.f)
                     zoom = 2.f;
+
+                sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+                sf::Vector2f before = window.mapPixelToCoords(mousePos, view);
                 view.setSize(window.getDefaultView().getSize() * zoom);
+                sf::Vector2f after = window.mapPixelToCoords(mousePos, view);
+                view.move(before - after);
                 window.setView(view);
             }
             if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {   // mouse panning from stack overflow
