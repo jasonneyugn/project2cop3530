@@ -178,6 +178,7 @@ std::vector<int> astar(int start, int end, const std::unordered_map<int, std::ve
     for (auto& [u, _] : adj) {
         dist[u] = std::numeric_limits<double>::infinity();
         predicteddist[u] = std::numeric_limits<double>::infinity();
+        visited[u] = false;
     }
 
     dist[start] = 0;
@@ -185,13 +186,13 @@ std::vector<int> astar(int start, int end, const std::unordered_map<int, std::ve
 
     using Node = std::pair<double, int>;
     std::priority_queue<Node, std::vector<Node>, std::greater<Node>> pq;
-    pq.push({dist[start], start});
+    pq.push({predicteddist[start], start});
 
     while (!pq.empty()) {
         int u = pq.top().second;
         pq.pop();
 
-        if (dist[u]) {
+        if (visited[u]) {
             continue;
         }
         visited[u] = true;
@@ -215,6 +216,16 @@ std::vector<int> astar(int start, int end, const std::unordered_map<int, std::ve
             }
         }
     }
+    std::vector<int> path;
+    if (dist[end] == std::numeric_limits<double>::infinity()) {
+        return path;
+    }
+    for (int at =end; at != start; at = prev[at]) {
+        path.push_back(at);
+    }
+    path.push_back(start);
+    std::reverse(path.begin(), path.end());
+    return path;
 }
 
 
@@ -440,7 +451,7 @@ int main() {
                         if (shortestPath.size() < 0) {
                             std::cout << "no path found." << std::endl;
                         } else {
-                            std::cout << "Shortest path: " << shortestPath.size() << std::endl;
+                            std::cout << "dijkstra path: " << shortestPath.size() << std::endl;
                         }
                     }
                 } else {
@@ -463,6 +474,39 @@ int main() {
                 }
                 if (clickedId != -1) {
                     std::cout << "Airport name: " << airportById.at(clickedId)->name << std::endl;
+                }
+            }
+            if (event.type == sf::Event::KeyPressed && event.mouseButton.button == sf::Keyboard::A) {
+                sf::Vector2f clickPos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
+                float clickRadius = 2.0f;
+                int clickedId = -1;
+
+                for (auto& airport : airports) {
+                    sf::Vector2f pos = airportPos[airport.id];
+                    if (std::hypot(pos.x - clickPos.x, pos.y - clickPos.y) < clickRadius) {
+                        clickedId = airport.id;
+                        break;
+                    }
+                }
+                if (clickedId != -1) {
+                    if (startAirport ==-1) {
+                        startAirport = clickedId;
+                        std::cout << airportById.at(clickedId)->name << std::endl;
+                    }
+                    else if (endAirport ==-1) {
+                        endAirport = clickedId;
+                        std::cout << airportById.at(clickedId)->name << std::endl;
+                        shortestPath = astar(startAirport, endAirport, adj, airportById);
+                        if (shortestPath.size() < 0) {
+                            std::cout << "no path found." << std::endl;
+                        } else {
+                            std::cout << "astar path: " << shortestPath.size() << std::endl;
+                        }
+                    }
+                } else {
+                    startAirport = clickedId;
+                    endAirport = -1;
+                    shortestPath.clear();
                 }
             }
             window.clear(sf::Color::Black);
@@ -496,7 +540,7 @@ int main() {
                 window.draw(dotnew);
             }
             if (!shortestPath.empty()) {
-                sf::VertexArray lines(sf::Lines);
+                sf::VertexArray lines(sf::LinesStrip);
                 for (int id: shortestPath) {
                     if (airportPos.count(id)) {
                         lines.append(sf::Vertex(airportPos[id], sf::Color::Green));
