@@ -299,6 +299,18 @@ int main() {
             continue;
     }
 
+    for (auto& airport : airports) {
+        int id = airport.id;
+        if (!adj.count(id) || adj[id].size() == 0) {
+            int target = airports[rand() % airports.size()].id;
+            if (target == id) {
+                continue;
+            }
+            double dist = haversine(airportById.at(id)->lat, airportById.at(id)->lon, airportById.at(target)->lat, airportById.at(target)->lon);
+            adj[id].push_back({target, dist});
+            adj[target].push_back({id, dist});
+        }
+    }
 
 
 
@@ -425,7 +437,7 @@ int main() {
                         endAirport = clickedId;
                         std::cout << airportById.at(clickedId)->name << std::endl;
                         shortestPath = dijkstra(startAirport, endAirport, adj);
-                        if (shortestPath.size() > 0) {
+                        if (shortestPath.size() < 0) {
                             std::cout << "no path found." << std::endl;
                         } else {
                             std::cout << "Shortest path: " << shortestPath.size() << std::endl;
@@ -482,6 +494,15 @@ int main() {
                 dotnew.setFillColor(sf::Color::Blue);
                 dotnew.setPosition(airportPos[selectedAirport].x - 2.f, airportPos[selectedAirport].y - 2.f);
                 window.draw(dotnew);
+            }
+            if (!shortestPath.empty()) {
+                sf::VertexArray lines(sf::Lines);
+                for (int id: shortestPath) {
+                    if (airportPos.count(id)) {
+                        lines.append(sf::Vertex(airportPos[id], sf::Color::Green));
+                    }
+                }
+                window.draw(lines);
             }
             window.display();
         }
