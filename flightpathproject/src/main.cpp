@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <queue>
 #include <limits>
+#include <random>
 
 struct Airport {
     int id;
@@ -258,6 +259,49 @@ int main() {
     auto airportById = makeMap(airports);
     std::unordered_map<int, std::vector<Edge>> adj;
     loadRoutes("./data/routes.dat", adj, airportById);
+
+    //CONNNECTION FOR THE ACTUAL PROJECT PART
+    std::default_random_engine rng(24);
+    std::uniform_int_distribution<size_t> random(0, airportById.size() - 1);
+    auto totalEdges = [&]() {
+        size_t total = 0;
+        for (auto& [_, edges] : adj)
+            total += edges.size();
+        return total;
+    };
+    size_t target = 110000;
+    size_t curr = totalEdges();
+
+    while (curr < target) {
+        int a = airports[random(rng)].id;
+        int b = airports[random(rng)].id;
+        if (a == b) {
+            continue;
+        }
+        bool found = false;
+        if (adj.count(a)) {
+            for (auto& edge : adj.at(a)) {
+                if (edge.dest == b) {
+                    found = true;
+                    break;
+                }
+            }
+        }
+        if (found) {
+            continue;
+        }
+        double dist = haversine(airportById.at(a)->lat, airportById.at(a)->lon, airportById.at(b)->lat, airportById.at(b)->lon);
+        adj[a].push_back({b,dist});
+        adj[b].push_back({a,dist});
+        curr++;
+        curr++;
+        if (curr % 10000 == 0)
+            continue;
+    }
+
+
+
+
 
 
     sf::RenderWindow window(sf::VideoMode(1200, 1200), "OpenFlights Viewer"); // window for map
