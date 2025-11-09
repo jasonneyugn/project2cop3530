@@ -168,7 +168,7 @@ std::vector<int> dijkstra(int start, int end, const std::unordered_map<int, std:
     }
     path.push_back(start);
     std::reverse(path.begin(), path.end());
-    std::cout << "visited notes: " << visited_count << std::endl;
+    std::cout << "visited nodes: " << visited_count << std::endl;
     return path;
 }
 
