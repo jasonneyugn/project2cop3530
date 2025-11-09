@@ -9,6 +9,7 @@
 #include <queue>
 #include <limits>
 #include <random>
+#include <chrono>
 
 struct Airport {
     int id;
@@ -120,6 +121,7 @@ std::vector<int> dijkstra(int start, int end, const std::unordered_map<int, std:
     std::unordered_map<int, double> dist;
     std::unordered_map<int, int> prev;
     std::unordered_map<int, bool> visited;
+    int visited_count = 0;
 
     for (auto& [u, _] : adj) {
         dist[u] = std::numeric_limits<double>::infinity();
@@ -139,6 +141,7 @@ std::vector<int> dijkstra(int start, int end, const std::unordered_map<int, std:
             continue;
         }
         visited[u] = true;
+        visited_count++;
         if (u == end) {
             break;
         }
@@ -165,6 +168,7 @@ std::vector<int> dijkstra(int start, int end, const std::unordered_map<int, std:
     }
     path.push_back(start);
     std::reverse(path.begin(), path.end());
+    std::cout << "visited notes: " << visited_count << std::endl;
     return path;
 }
 
@@ -174,6 +178,7 @@ std::vector<int> astar(int start, int end, const std::unordered_map<int, std::ve
     std::unordered_map<int, double> predicteddist;
     std::unordered_map<int, int> prev;
     std::unordered_map<int, bool> visited;
+    int visited_count = 0;
 
     for (auto& [u, _] : adj) {
         dist[u] = std::numeric_limits<double>::infinity();
@@ -196,6 +201,7 @@ std::vector<int> astar(int start, int end, const std::unordered_map<int, std::ve
             continue;
         }
         visited[u] = true;
+        visited_count++;
 
         if (u == end) {
             break;
@@ -225,6 +231,7 @@ std::vector<int> astar(int start, int end, const std::unordered_map<int, std::ve
     }
     path.push_back(start);
     std::reverse(path.begin(), path.end());
+    std::cout<< "visited nodes: " << visited_count << std::endl;
     return path;
 }
 
@@ -447,11 +454,15 @@ int main() {
                     else if (endAirport ==-1) {
                         endAirport = clickedId;
                         std::cout << airportById.at(clickedId)->name << std::endl;
+                        auto startTime = std::chrono::high_resolution_clock::now();
                         shortestPath = dijkstra(startAirport, endAirport, adj);
+                        auto endTime = std::chrono::high_resolution_clock::now();
+                        auto dur = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
                         if (shortestPath.size() < 0) {
                             std::cout << "no path found." << std::endl;
                         } else {
                             std::cout << "dijkstra path: " << shortestPath.size() << std::endl;
+                            std::cout << "Runtime: " << dur << " microseconds" << std::endl;
                         }
                     }
                 } else {
@@ -476,7 +487,7 @@ int main() {
                     std::cout << "Airport name: " << airportById.at(clickedId)->name << std::endl;
                 }
             }
-            if (event.type == sf::Event::KeyPressed && event.mouseButton.button == sf::Keyboard::A) {
+            if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::A) {
                 sf::Vector2f clickPos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
                 float clickRadius = 2.0f;
                 int clickedId = -1;
@@ -496,11 +507,15 @@ int main() {
                     else if (endAirport ==-1) {
                         endAirport = clickedId;
                         std::cout << airportById.at(clickedId)->name << std::endl;
+                        auto startTime = std::chrono::high_resolution_clock::now();
                         shortestPath = astar(startAirport, endAirport, adj, airportById);
+                        auto endTime = std::chrono::high_resolution_clock::now();
+                        auto dur = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
                         if (shortestPath.size() < 0) {
                             std::cout << "no path found." << std::endl;
                         } else {
                             std::cout << "astar path: " << shortestPath.size() << std::endl;
+                            std::cout<< "runtime: " << dur << " microseconds" << std::endl;
                         }
                     }
                 } else {
