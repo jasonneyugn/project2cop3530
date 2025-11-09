@@ -168,7 +168,8 @@ std::vector<int> dijkstra(int start, int end, const std::unordered_map<int, std:
     }
     path.push_back(start);
     std::reverse(path.begin(), path.end());
-    std::cout << "visited nodes: " << visited_count << std::endl;
+    std::cout << "----Dijkstra's Algorithm----" <<  std::endl;
+    std::cout << "Visited nodes: " << visited_count << std::endl;
     return path;
 }
 
@@ -231,7 +232,8 @@ std::vector<int> astar(int start, int end, const std::unordered_map<int, std::ve
     }
     path.push_back(start);
     std::reverse(path.begin(), path.end());
-    std::cout<< "visited nodes: " << visited_count << std::endl;
+    std::cout<< "\n----A* Algorithm----" << std::endl;
+    std::cout<< "Visited nodes: " << visited_count << std::endl;
     return path;
 }
 
@@ -277,6 +279,10 @@ int main() {
     auto airportById = makeMap(airports);
     std::unordered_map<int, std::vector<Edge>> adj;
     loadRoutes("./data/routes.dat", adj, airportById);
+
+
+
+
 
     //CONNNECTION FOR THE ACTUAL PROJECT PART
     std::default_random_engine rng(24);
@@ -331,7 +337,7 @@ int main() {
     }
 
 
-
+////
 
 
     sf::RenderWindow window(sf::VideoMode(1200, 1200), "OpenFlights Viewer"); // window for map
@@ -449,11 +455,11 @@ int main() {
                 if (clickedId != -1) {
                     if (startAirport ==-1) {
                         startAirport = clickedId;
-                        std::cout << airportById.at(clickedId)->name << std::endl;
+                        std::cout << "\nStart Airport: " << airportById.at(clickedId)->name << std::endl;
                     }
                     else if (endAirport ==-1) {
                         endAirport = clickedId;
-                        std::cout << airportById.at(clickedId)->name << std::endl;
+                        std::cout << "End Airport: " << airportById.at(clickedId)->name << std::endl;
                         auto startTime = std::chrono::high_resolution_clock::now();
                         shortestPath = dijkstra(startAirport, endAirport, adj);
                         auto endTime = std::chrono::high_resolution_clock::now();
@@ -462,7 +468,7 @@ int main() {
                             std::cout << "no path found." << std::endl;
                         } else {
                             std::cout << "dijkstra path: " << shortestPath.size() << std::endl;
-                            std::cout << "Runtime: " << dur << " microseconds" << std::endl;
+                            std::cout << "Runtime: " << dur.count() << " microseconds" << std::endl;
                         }
                     }
                 } else {
@@ -502,11 +508,11 @@ int main() {
                 if (clickedId != -1) {
                     if (startAirport ==-1) {
                         startAirport = clickedId;
-                        std::cout << airportById.at(clickedId)->name << std::endl;
+                        std::cout << "\nStart Airport: " << airportById.at(clickedId)->name << std::endl;
                     }
                     else if (endAirport ==-1) {
                         endAirport = clickedId;
-                        std::cout << airportById.at(clickedId)->name << std::endl;
+                        std::cout << "\nStart Airport: " << airportById.at(clickedId)->name << std::endl;
                         auto startTime = std::chrono::high_resolution_clock::now();
                         shortestPath = astar(startAirport, endAirport, adj, airportById);
                         auto endTime = std::chrono::high_resolution_clock::now();
@@ -515,7 +521,7 @@ int main() {
                             std::cout << "no path found." << std::endl;
                         } else {
                             std::cout << "astar path: " << shortestPath.size() << std::endl;
-                            std::cout<< "runtime: " << dur << " microseconds" << std::endl;
+                            std::cout<< "runtime: " << dur.count() << " microseconds" << std::endl;
                         }
                     }
                 } else {
